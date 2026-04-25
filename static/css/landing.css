@@ -1,0 +1,206 @@
+/* ------------------------------------------------------------------ */
+/* Hero — centered single-column layout                                */
+/* ------------------------------------------------------------------ */
+
+.hero {
+    padding: 5rem 2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.hero-inner {
+    width: 100%;
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.4rem 1.1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(26, 71, 42, 0.18);
+    margin-bottom: 2rem;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+}
+
+.hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 6vw, 4.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+}
+
+.hero-title-accent {
+    display: block;
+    color: var(--accent);
+    font-style: normal;
+}
+
+.hero-subtitle {
+    font-size: 1.05rem;
+    color: var(--ink-muted);
+    line-height: 1.75;
+    max-width: 520px;
+    margin: 0 auto 2.5rem;
+}
+
+.hero-actions {
+    justify-content: center;
+    margin-bottom: 4rem;
+}
+
+/* Second CTA button — same dark style as btn-primary */
+.btn-secondary-dark {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.65rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+    text-decoration: none;
+}
+
+.btn-secondary-dark:hover { background: var(--accent); }
+
+/* ------------------------------------------------------------------ */
+/* Dashboard mock                                                       */
+/* ------------------------------------------------------------------ */
+
+.hero-dashboard {
+    width: 100%;
+    max-width: 680px;
+    background: var(--paper-warm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem 1.75rem;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.07);
+}
+
+.dashboard-chrome {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+}
+
+.chrome-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.chrome-red    { background: #ff5f57; }
+.chrome-yellow { background: #febc2e; }
+.chrome-green  { background: #28c840; }
+
+.dashboard-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.stat-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.1rem;
+    text-align: left;
+}
+
+.stat-label {
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    margin-bottom: 0.3rem;
+}
+
+.stat-value {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--ink);
+    line-height: 1.1;
+    margin-bottom: 0.3rem;
+}
+
+.stat-sub {
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+}
+
+.stat-danger  { color: var(--danger); }
+.stat-success { color: var(--accent); }
+
+.dashboard-bars {
+    background: var(--paper-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    text-align: left;
+}
+
+.dash-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dash-cat {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    font-weight: 500;
+    width: 48px;
+    flex-shrink: 0;
+    text-align: right;
+}
+
+.dash-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border-soft);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.dash-bar {
+    height: 100%;
+    border-radius: 999px;
+}
+
+.dash-bar-amber  { background: #c17f24; }
+.dash-bar-blue   { background: #4a90d9; }
+.dash-bar-indigo { background: #7c6fcd; }
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                           */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 700px) {
+    .dashboard-stats { grid-template-columns: 1fr; }
+    .hero-actions { flex-direction: column; align-items: center; }
+}
