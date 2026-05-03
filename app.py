@@ -86,7 +86,38 @@ def logout():
 @app.route("/profile")
 @login_required
 def profile():
-    return "Profile page — coming in Step 4"
+    user = {
+        "name": "Alex Johnson",
+        "email": "alex@example.com",
+        "initials": "AJ",
+        "member_since": "January 2024",
+    }
+    stats = {
+        "total_spent": "₹316.00",
+        "transaction_count": 8,
+        "top_category": "Bills",
+    }
+    transactions = [
+        {"date": "Apr 22, 2026", "description": "Miscellaneous",     "category": "Other",         "amount": "₹20.00"},
+        {"date": "Apr 18, 2026", "description": "Coffee and snacks", "category": "Food",          "amount": "₹8.50"},
+        {"date": "Apr 15, 2026", "description": "New shoes",         "category": "Shopping",      "amount": "₹65.00"},
+        {"date": "Apr 12, 2026", "description": "Movie ticket",      "category": "Entertainment", "amount": "₹15.00"},
+        {"date": "Apr 08, 2026", "description": "Pharmacy",          "category": "Health",        "amount": "₹30.00"},
+    ]
+    categories = [
+        {"name": "Bills",         "total": "₹120.00", "icon": "🏠"},
+        {"name": "Shopping",      "total": "₹65.00",  "icon": "🛍️"},
+        {"name": "Food",          "total": "₹54.00",  "icon": "🍽️"},
+        {"name": "Health",        "total": "₹30.00",  "icon": "💊"},
+        {"name": "Entertainment", "total": "₹15.00",  "icon": "🎬"},
+        {"name": "Transport",     "total": "₹12.00",  "icon": "🚌"},
+        {"name": "Other",         "total": "₹20.00",  "icon": "📦"},
+    ]
+    return render_template("profile.html",
+                           user=user,
+                           stats=stats,
+                           transactions=transactions,
+                           categories=categories)
 
 
 @app.route("/expenses/add")
