@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, session, redirect, url_for
 from functools import wraps
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from database.db import get_db, init_db, seed_db
 
 app = Flask(__name__)
@@ -25,8 +25,30 @@ def landing():
     return render_template("landing.html")
 
 
-@app.route("/register")
+@app.route("/register", methods=["GET", "POST"])
 def register():
+    if request.method == "POST":
+        name     = request.form["name"]
+        email    = request.form["email"]
+        password = request.form["password"]
+
+        db = get_db()
+        existing = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        if existing:
+            db.close()
+            return render_template("register.html", error="An account with that email already exists.")
+
+        db.execute(
+            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            (name, email, generate_password_hash(password)),
+        )
+        db.commit()
+        user = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+        db.close()
+
+        session["user_id"] = user["id"]
+        return redirect(url_for("profile"))
+
     return render_template("register.html")
 
 
