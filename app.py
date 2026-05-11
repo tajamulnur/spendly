@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -5,6 +6,16 @@ from database.db import get_db, init_db, seed_db
 
 app = Flask(__name__)
 app.secret_key = "spendly-secret-key-change-in-production"
+
+CATEGORY_ICONS = {
+    "Food": "🍽️",
+    "Transport": "🚌",
+    "Bills": "🏠",
+    "Health": "💊",
+    "Entertainment": "🎬",
+    "Shopping": "🛍️",
+    "Other": "📦",
+}
 
 
 def login_required(f):
@@ -86,33 +97,64 @@ def logout():
 @app.route("/profile")
 @login_required
 def profile():
+    db = get_db()
+    uid = session["user_id"]
+
+    row = db.execute(
+        "SELECT name, email, created_at FROM users WHERE id = ?", (uid,)
+    ).fetchone()
+    words = row["name"].split()
+    initials = (words[0][0] + (words[-1][0] if len(words) > 1 else "")).upper()
+    member_since = datetime.strptime(row["created_at"][:10], "%Y-%m-%d").strftime("%B %Y")
     user = {
-        "name": "Alex Johnson",
-        "email": "alex@example.com",
-        "initials": "AJ",
-        "member_since": "January 2024",
+        "name": row["name"],
+        "email": row["email"],
+        "initials": initials,
+        "member_since": member_since,
     }
+
+    agg = db.execute(
+        "SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt "
+        "FROM expenses WHERE user_id = ?", (uid,)
+    ).fetchone()
+    top = db.execute(
+        "SELECT category FROM expenses WHERE user_id = ? "
+        "GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1", (uid,)
+    ).fetchone()
     stats = {
-        "total_spent": "₹316.00",
-        "transaction_count": 8,
-        "top_category": "Bills",
+        "total_spent": f"₹{agg['total']:.2f}",
+        "transaction_count": agg["cnt"],
+        "top_category": top["category"] if top else "—",
     }
+
+    rows = db.execute(
+        "SELECT date, description, category, amount FROM expenses "
+        "WHERE user_id = ? ORDER BY date DESC LIMIT 5", (uid,)
+    ).fetchall()
     transactions = [
-        {"date": "Apr 22, 2026", "description": "Miscellaneous",     "category": "Other",         "amount": "₹20.00"},
-        {"date": "Apr 18, 2026", "description": "Coffee and snacks", "category": "Food",          "amount": "₹8.50"},
-        {"date": "Apr 15, 2026", "description": "New shoes",         "category": "Shopping",      "amount": "₹65.00"},
-        {"date": "Apr 12, 2026", "description": "Movie ticket",      "category": "Entertainment", "amount": "₹15.00"},
-        {"date": "Apr 08, 2026", "description": "Pharmacy",          "category": "Health",        "amount": "₹30.00"},
+        {
+            "date": datetime.strptime(r["date"], "%Y-%m-%d").strftime("%b %d, %Y"),
+            "description": r["description"] or "",
+            "category": r["category"],
+            "amount": f"₹{r['amount']:.2f}",
+        }
+        for r in rows
     ]
+
+    cat_rows = db.execute(
+        "SELECT category, SUM(amount) AS total FROM expenses "
+        "WHERE user_id = ? GROUP BY category ORDER BY total DESC", (uid,)
+    ).fetchall()
     categories = [
-        {"name": "Bills",         "total": "₹120.00", "icon": "🏠"},
-        {"name": "Shopping",      "total": "₹65.00",  "icon": "🛍️"},
-        {"name": "Food",          "total": "₹54.00",  "icon": "🍽️"},
-        {"name": "Health",        "total": "₹30.00",  "icon": "💊"},
-        {"name": "Entertainment", "total": "₹15.00",  "icon": "🎬"},
-        {"name": "Transport",     "total": "₹12.00",  "icon": "🚌"},
-        {"name": "Other",         "total": "₹20.00",  "icon": "📦"},
+        {
+            "name": c["category"],
+            "total": f"₹{c['total']:.2f}",
+            "icon": CATEGORY_ICONS.get(c["category"], "📦"),
+        }
+        for c in cat_rows
     ]
+
+    db.close()
     return render_template("profile.html",
                            user=user,
                            stats=stats,
