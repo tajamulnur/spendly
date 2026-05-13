@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from flask import Flask, render_template, request, session, redirect, url_for
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -16,6 +16,53 @@ CATEGORY_ICONS = {
     "Shopping": "🛍️",
     "Other": "📦",
 }
+
+ALL_TIME_FROM = "2000-01-01"
+ALL_TIME_TO   = "2999-12-31"
+VALID_PERIODS = {"this_month", "last_month", "last_3_months", "all_time"}
+
+
+def resolve_date_filter(args, today):
+    if args.get("from") and args.get("to"):
+        try:
+            datetime.strptime(args["from"], "%Y-%m-%d")
+            datetime.strptime(args["to"], "%Y-%m-%d")
+            date_from, date_to = args["from"], args["to"]
+            active_period = "custom"
+        except ValueError:
+            date_from, date_to = ALL_TIME_FROM, ALL_TIME_TO
+            active_period = "all_time"
+    else:
+        period = args.get("period", "all_time")
+        if period not in VALID_PERIODS:
+            period = "all_time"
+        if period == "this_month":
+            date_from = today.replace(day=1).isoformat()
+            date_to   = today.isoformat()
+        elif period == "last_month":
+            first_of_this = today.replace(day=1)
+            last_of_prev  = first_of_this - timedelta(days=1)
+            date_from     = last_of_prev.replace(day=1).isoformat()
+            date_to       = last_of_prev.isoformat()
+        elif period == "last_3_months":
+            date_from = (today - timedelta(days=90)).isoformat()
+            date_to   = today.isoformat()
+        else:
+            date_from, date_to = ALL_TIME_FROM, ALL_TIME_TO
+        active_period = period
+
+    if active_period == "all_time":
+        showing_label = "All time"
+        input_from = input_to = ""
+    else:
+        showing_label = (
+            datetime.strptime(date_from, "%Y-%m-%d").strftime("%b %-d, %Y")
+            + " – "
+            + datetime.strptime(date_to, "%Y-%m-%d").strftime("%b %-d, %Y")
+        )
+        input_from, input_to = date_from, date_to
+
+    return date_from, date_to, active_period, showing_label, input_from, input_to
 
 
 def login_required(f):
@@ -97,6 +144,9 @@ def logout():
 @app.route("/profile")
 @login_required
 def profile():
+    date_from, date_to, active_period, showing_label, input_from, input_to = \
+        resolve_date_filter(request.args, date.today())
+
     db = get_db()
     uid = session["user_id"]
 
@@ -115,11 +165,13 @@ def profile():
 
     agg = db.execute(
         "SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS cnt "
-        "FROM expenses WHERE user_id = ?", (uid,)
+        "FROM expenses WHERE user_id = ? AND date BETWEEN ? AND ?",
+        (uid, date_from, date_to)
     ).fetchone()
     top = db.execute(
-        "SELECT category FROM expenses WHERE user_id = ? "
-        "GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1", (uid,)
+        "SELECT category FROM expenses WHERE user_id = ? AND date BETWEEN ? AND ? "
+        "GROUP BY category ORDER BY SUM(amount) DESC LIMIT 1",
+        (uid, date_from, date_to)
     ).fetchone()
     stats = {
         "total_spent": f"₹{agg['total']:.2f}",
@@ -129,7 +181,8 @@ def profile():
 
     rows = db.execute(
         "SELECT date, description, category, amount FROM expenses "
-        "WHERE user_id = ? ORDER BY date DESC LIMIT 5", (uid,)
+        "WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date DESC LIMIT 5",
+        (uid, date_from, date_to)
     ).fetchall()
     transactions = [
         {
@@ -143,7 +196,8 @@ def profile():
 
     cat_rows = db.execute(
         "SELECT category, SUM(amount) AS total FROM expenses "
-        "WHERE user_id = ? GROUP BY category ORDER BY total DESC", (uid,)
+        "WHERE user_id = ? AND date BETWEEN ? AND ? GROUP BY category ORDER BY total DESC",
+        (uid, date_from, date_to)
     ).fetchall()
     categories = [
         {
@@ -159,7 +213,11 @@ def profile():
                            user=user,
                            stats=stats,
                            transactions=transactions,
-                           categories=categories)
+                           categories=categories,
+                           active_period=active_period,
+                           input_from=input_from,
+                           input_to=input_to,
+                           showing_label=showing_label)
 
 
 @app.route("/expenses/add")
