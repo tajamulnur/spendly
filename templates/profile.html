@@ -17,6 +17,29 @@
             <a href="{{ url_for('logout') }}" class="btn-ghost">Sign out</a>
         </div>
 
+        <div class="filter-bar">
+            <div class="filter-presets">
+                <a href="{{ url_for('profile', period='this_month') }}"
+                   class="filter-btn{% if active_period == 'this_month' %} active{% endif %}">This Month</a>
+                <a href="{{ url_for('profile', period='last_month') }}"
+                   class="filter-btn{% if active_period == 'last_month' %} active{% endif %}">Last Month</a>
+                <a href="{{ url_for('profile', period='last_3_months') }}"
+                   class="filter-btn{% if active_period == 'last_3_months' %} active{% endif %}">Last 3 Months</a>
+                <a href="{{ url_for('profile') }}"
+                   class="filter-btn{% if active_period == 'all_time' %} active{% endif %}">All Time</a>
+            </div>
+            <form class="filter-custom" method="get" action="{{ url_for('profile') }}">
+                <label for="filter-from">From</label>
+                <input type="date" id="filter-from" name="from" class="form-input"
+                       value="{{ input_from }}">
+                <label for="filter-to">To</label>
+                <input type="date" id="filter-to" name="to" class="form-input"
+                       value="{{ input_to }}">
+                <button type="submit" class="btn-primary">Apply</button>
+            </form>
+            <p class="filter-label">Showing: {{ showing_label }}</p>
+        </div>
+
         <div class="profile-stats">
             <div class="stat-card">
                 <p class="stat-label">Total spent</p>
