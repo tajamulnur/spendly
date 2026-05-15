@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, session, redirect, url_for
 from functools import wraps
 from werkzeug.security import check_password_hash, generate_password_hash
 from database.db import get_db, init_db, seed_db
+from database.queries import insert_expense
 
 app = Flask(__name__)
 app.secret_key = "spendly-secret-key-change-in-production"
@@ -220,9 +221,49 @@ def profile():
                            showing_label=showing_label)
 
 
-@app.route("/expenses/add")
+@app.route("/expenses/add", methods=["GET", "POST"])
+@login_required
 def add_expense():
-    return "Add expense — coming in Step 7"
+    today = date.today().isoformat()
+
+    def render_form(error):
+        return render_template("add_expense.html",
+            categories=list(CATEGORY_ICONS.keys()),
+            today=today,
+            error=error,
+            form=request.form)
+
+    if request.method == "POST":
+        raw_amount  = request.form.get("amount", "").strip()
+        category    = request.form.get("category", "").strip()
+        date_str    = request.form.get("date", "").strip()
+        description = request.form.get("description", "").strip() or None
+
+        if description and len(description) > 200:
+            return render_form("Description must be 200 characters or fewer.")
+
+        try:
+            amount = float(raw_amount)
+            if amount <= 0:
+                raise ValueError
+        except ValueError:
+            return render_form("Amount must be a positive number.")
+
+        if category not in CATEGORY_ICONS:
+            return render_form("Please select a valid category.")
+
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            return render_form("Please enter a valid date.")
+
+        insert_expense(session["user_id"], amount, category, date_str, description)
+        return redirect(url_for("profile"))
+
+    return render_template("add_expense.html",
+        categories=list(CATEGORY_ICONS.keys()),
+        today=today,
+        form={})
 
 
 @app.route("/expenses/<int:id>/edit")

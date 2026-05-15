@@ -420,6 +420,11 @@ a { color: inherit; text-decoration: none; }
     margin-bottom: 1.25rem;
 }
 
+.label-hint {
+    color: var(--ink-faint);
+    font-weight: 400;
+}
+
 .form-group { margin-bottom: 1.25rem; }
 
 .form-group label {
